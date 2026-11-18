@@ -1,5 +1,5 @@
 from __future__ import annotations
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from app.db import connect, init_db
 
 
@@ -25,7 +25,8 @@ def seed_if_empty() -> None:
                 "INSERT INTO campaigns(code, title, face_value, min_spend) VALUES(?,?,?,?)",
                 (code, title, face, mn),
             )
-        # issue + redeem events for today and yesterday
+        # Events for today and yesterday.  Redeems stay in the lake only; their
+        # facts are materialized by the nail transaction.
         yday = (date.today() - timedelta(days=1)).isoformat()
         rows = [
             ("issue", "C-1001", "NEW10", 0, today, f"{today}T09:00:00"),
@@ -37,15 +38,10 @@ def seed_if_empty() -> None:
             ("redeem", "C-0901", "NEW10", 10, yday, f"{yday}T18:00:00"),
         ]
         for et, cc, camp, amt, day, at in rows:
-            cur = conn.execute(
+            conn.execute(
                 "INSERT INTO coupon_events(event_type, coupon_code, campaign_code, amount, business_day, occurred_at) VALUES(?,?,?,?,?,?)",
                 (et, cc, camp, amt, day, at),
             )
-            if et == "redeem":
-                conn.execute(
-                    "INSERT INTO redeem_facts(coupon_code, campaign_code, amount, business_day, event_id, status) VALUES(?,?,?,?,?, 'open')",
-                    (cc, camp, amt, day, cur.lastrowid),
-                )
         conn.commit()
     finally:
         conn.close()

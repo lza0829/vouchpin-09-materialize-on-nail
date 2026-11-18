@@ -23,7 +23,7 @@ async function submit() {
     if (body.amount === '') delete body.amount
     else body.amount = Number(body.amount)
     const r = await api.addEvent(body)
-    msg.value = `已写入事件 #${r.event_id}` + (r.fact_id ? ` / 事实 #${r.fact_id}` : '')
+    msg.value = `已写入事件 #${r.event_id}` + (r.fact_id ? ` / 事实 #${r.fact_id}` : ' · 待钉扎时物化')
     form.value.coupon_code = ''
     await load()
   } catch (e) { err.value = e.message }
